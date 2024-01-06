@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use proc_macro2::Span;
@@ -44,6 +46,58 @@ impl VisitMut for LiftMonadic {
     }
 }
 
+/// Macro for applying bang notation.
+///
+/// For expression written within `bang!` macro, each subexpression prefixed
+/// with `!` gets lifted to the top of the expression. Then, it is bound using
+/// `and_then` combinator, and the freshly bound name is used in place of the
+/// subexpression. The lifting occurrs left-to-right, inside out.
+///
+/// For example, the following expression:
+/// ```rust
+/// # #[macro_use] extern crate bang_notation;
+/// # use bang_notation::bang;
+/// # fn f(x: i32, y: i32) -> Option<i32> {
+/// #   Some(x + y)
+/// # }
+/// # fn g(x: i32, y: i32) -> Option<i32> {
+/// #   None
+/// # }
+/// # fn main() {
+/// # let x: Option<i32> = Some(0);
+/// # let y: Option<i32> = Some(0);
+/// # let z: Option<i32> = Some(0);
+/// bang!(f(!x, !g(!y, !z)))
+/// # ;
+/// # }
+/// ```
+///
+/// Will get transformed roughly into:
+/// ```rust
+/// # #[macro_use] extern crate bang_notation;
+/// # use bang_notation::bang;
+/// # fn f(x: i32, y: i32) -> Option<i32> {
+/// #   Some(x + y)
+/// # }
+/// # fn g(x: i32, y: i32) -> Option<i32> {
+/// #   None
+/// # }
+/// # fn main() {
+/// # let x: Option<i32> = Some(0);
+/// # let y: Option<i32> = Some(0);
+/// # let z: Option<i32> = Some(0);
+/// x.and_then(|x_| {
+///     y.and_then(|y_| {
+///         z.and_then(|z_| {
+///             g(y_, z_).and_then(|g_| {
+///                 f(x_, g_)
+///             })
+///         })
+///     })
+/// })
+/// # ;
+/// # }
+/// ```
 #[proc_macro]
 pub fn bang(input: TokenStream) -> TokenStream {
     // This is macro entry point.
