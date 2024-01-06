@@ -110,3 +110,79 @@ fn order002() {
         assert_eq!(res.tag[i], i.try_into().unwrap());
     }
 }
+
+// For fun
+#[derive(Debug)]
+enum List<T> {
+    Nil,
+    Cons(T, Box<List<T>>),
+}
+
+impl<T: Clone> Clone for List<T> {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Nil => Self::Nil,
+            Self::Cons(arg0, arg1) => Self::Cons(arg0.clone(), arg1.clone()),
+        }
+    }
+}
+
+impl<T> List<T> {
+    fn new() -> List<T> {
+        List::Nil
+    }
+
+    fn from_vec(mut xs: Vec<T>) -> List<T> {
+        let mut list = List::Nil;
+
+        xs.reverse();
+        for elem in xs {
+            list = List::Cons(elem, Box::new(list))
+        }
+
+        list
+    }
+
+    fn pure(x: T) -> List<T> {
+        List::Cons(x, Box::new(List::Nil))
+    }
+
+    fn append(self, ys: List<T>) -> List<T> {
+        match self {
+            List::Nil => ys,
+            List::Cons(x, xs) => List::Cons(x, Box::new(xs.append(ys))),
+        }
+    }
+
+    fn and_then<F, U>(self, f: F) -> List<U>
+    where
+        F: FnOnce(T) -> List<U>,
+        F: Clone,
+    {
+        match self {
+            List::Nil => List::Nil,
+            List::Cons(x, xs) => f.clone()(x).append(xs.and_then(f)),
+        }
+    }
+}
+
+impl<T: PartialEq> PartialEq for List<T> {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Cons(l0, l1), Self::Cons(r0, r1)) => l0 == r0 && l1 == r1,
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
+}
+
+impl<T: Eq> Eq for List<T> {}
+
+#[test]
+fn list001() {
+    let xs = List::from_vec(vec![1, 3, 5]);
+    let ys = List::from_vec(vec![2, 4, 6]);
+
+    let zs = bang!(List::pure(!xs + !ys));
+    let zss = List::from_vec(vec![3, 5, 7, 5, 7, 9, 7, 9, 11]);
+    assert_eq!(zs, zss);
+}

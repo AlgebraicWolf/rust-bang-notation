@@ -83,7 +83,15 @@ This Rust version aims to be as general as possible.
 It is supposed to work with any type that provides `and_then` method with a suitable signature.
 If you found any example where this doesn't work, let me know!
 
-## Order of binding
+## Is this any better than `?` operator?
+
+Yes! AFAIK, currently `?` operator works only with `Option` and `Result` types.
+There is an [experimental `Try` trait](https://doc.rust-lang.org/std/ops/trait.Try.html) that could be used to overload `?` operator,
+but it provides semantics different to `!`-notation in this crate.
+Unlike `?`, `!`-notation is applicable to arbitrary types that provide a suitable interface for `and_then`.
+As an example, you might want to take a look at `list001` test that uses a custom-written `List` monad.
+
+## In what order are values bound?
 
 The expressions marked with `!` are bound left-to-right, in order they are written in the source code.
 In case of nested expressions marked with `!`, the inner expressions are bound first.
