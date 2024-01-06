@@ -39,6 +39,9 @@ impl VisitMut for LiftMonadic {
                     .push((*un_expr.expr.clone(), fresh_ident.clone()));
                 *i = parse_quote!(#fresh_ident);
             }
+
+            // We have visited all we need, no need to re-visit.
+            return;
         }
 
         // Perform default visitor routine to recursively traverse everything.
@@ -55,37 +58,11 @@ impl VisitMut for LiftMonadic {
 ///
 /// For example, the following expression:
 /// ```rust
-/// # #[macro_use] extern crate bang_notation;
-/// # use bang_notation::bang;
-/// # fn f(x: i32, y: i32) -> Option<i32> {
-/// #   Some(x + y)
-/// # }
-/// # fn g(x: i32, y: i32) -> Option<i32> {
-/// #   None
-/// # }
-/// # fn main() {
-/// # let x: Option<i32> = Some(0);
-/// # let y: Option<i32> = Some(0);
-/// # let z: Option<i32> = Some(0);
 /// bang!(f(!x, !g(!y, !z)))
-/// # ;
-/// # }
 /// ```
 ///
 /// Will get transformed roughly into:
 /// ```rust
-/// # #[macro_use] extern crate bang_notation;
-/// # use bang_notation::bang;
-/// # fn f(x: i32, y: i32) -> Option<i32> {
-/// #   Some(x + y)
-/// # }
-/// # fn g(x: i32, y: i32) -> Option<i32> {
-/// #   None
-/// # }
-/// # fn main() {
-/// # let x: Option<i32> = Some(0);
-/// # let y: Option<i32> = Some(0);
-/// # let z: Option<i32> = Some(0);
 /// x.and_then(|x_| {
 ///     y.and_then(|y_| {
 ///         z.and_then(|z_| {
@@ -95,8 +72,6 @@ impl VisitMut for LiftMonadic {
 ///         })
 ///     })
 /// })
-/// # ;
-/// # }
 /// ```
 #[proc_macro]
 pub fn bang(input: TokenStream) -> TokenStream {

@@ -128,10 +128,6 @@ impl<T: Clone> Clone for List<T> {
 }
 
 impl<T> List<T> {
-    fn new() -> List<T> {
-        List::Nil
-    }
-
     fn from_vec(mut xs: Vec<T>) -> List<T> {
         let mut list = List::Nil;
 
