@@ -33,7 +33,7 @@ struct LoggingBox<T> {
 }
 
 impl<T> LoggingBox<T> {
-    fn new(val : T, tag: u32) -> LoggingBox<T> {
+    fn new(val: T, tag: u32) -> LoggingBox<T> {
         LoggingBox {
             val: val,
             tag: vec![tag],
@@ -41,7 +41,9 @@ impl<T> LoggingBox<T> {
     }
 
     fn and_then<U, F>(mut self, f: F) -> LoggingBox<U>
-    where F: FnOnce(T) -> LoggingBox<U> {
+    where
+        F: FnOnce(T) -> LoggingBox<U>,
+    {
         let mut new_box = f(self.val);
         self.tag.append(&mut new_box.tag);
         new_box.tag = self.tag;
@@ -73,7 +75,7 @@ fn order001() {
 
     let res = bang!(LoggingBox::pure(sum3(!x1, !x2, !x3)));
     assert_eq!(res.val, 6);
-    
+
     for i in 0..res.tag.len() {
         assert_eq!(res.tag[i], i.try_into().unwrap());
     }
@@ -90,16 +92,20 @@ fn order002() {
     let x7 = LoggingBox::<u32>::new(7, 8);
     let x8 = LoggingBox::<u32>::new(8, 10);
     let x9 = LoggingBox::<u32>::new(9, 11);
-    let res = bang!(sum3_logged(!sum3_logged(
-                                    !sum3_logged(!x1, !x2, !x3, 3),
-                                    !sum3_logged(!x4, !x5, !x6, 7),
-                                    !x7,
-                                    9), 
-                                !x8, 
-                                !x9, 12));
+    let res = bang!(sum3_logged(
+        !sum3_logged(
+            !sum3_logged(!x1, !x2, !x3, 3),
+            !sum3_logged(!x4, !x5, !x6, 7),
+            !x7,
+            9
+        ),
+        !x8,
+        !x9,
+        12
+    ));
 
     assert_eq!(res.val, 45);
-    
+
     for i in 0..res.tag.len() {
         assert_eq!(res.tag[i], i.try_into().unwrap());
     }

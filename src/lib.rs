@@ -3,8 +3,8 @@ use proc_macro2::Ident;
 use proc_macro2::Span;
 use quote::ToTokens;
 use syn::parse_quote;
-use syn::{parse_macro_input, Expr, visit_mut, UnOp};
 use syn::visit_mut::VisitMut;
+use syn::{parse_macro_input, visit_mut, Expr, UnOp};
 
 struct LiftMonadic {
     lifted: Vec<(Expr, Ident)>,
@@ -12,9 +12,7 @@ struct LiftMonadic {
 
 impl LiftMonadic {
     pub fn new() -> LiftMonadic {
-        LiftMonadic {
-            lifted: Vec::new()
-        }
+        LiftMonadic { lifted: Vec::new() }
     }
 }
 
@@ -26,14 +24,17 @@ impl VisitMut for LiftMonadic {
             // expressions are lifted to the top.
             self.visit_expr_unary_mut(un_expr);
 
-
             // If this is a `!`, that is what we were looking for!
             // We shall move the expression to storage for lifting, replacing
             // it with a newly bound identifier here.
             if let UnOp::Not(_) = un_expr.op {
                 let id = self.lifted.len();
-                let fresh_ident = Ident::new(format!("__bang_inner_bind_{id}").as_str(), Span::call_site());
-                self.lifted.push((*un_expr.expr.clone(), fresh_ident.clone()));
+                let fresh_ident = Ident::new(
+                    format!("__bang_inner_bind_{id}").as_str(),
+                    Span::call_site(),
+                );
+                self.lifted
+                    .push((*un_expr.expr.clone(), fresh_ident.clone()));
                 *i = parse_quote!(#fresh_ident);
             }
         }
@@ -56,11 +57,15 @@ pub fn bang(input: TokenStream) -> TokenStream {
 
     // Now, we need to fold the lifted values and put all the bindings
     // on top of expression.
-    let ast = collector.lifted.iter().rev().fold(ast, |cur_ast, (expr, ident)| {
-        parse_quote!{
-            (#expr).and_then(|#ident| { #cur_ast })
-        }
-    });
+    let ast = collector
+        .lifted
+        .iter()
+        .rev()
+        .fold(ast, |cur_ast, (expr, ident)| {
+            parse_quote! {
+                (#expr).and_then(|#ident| { #cur_ast })
+            }
+        });
 
     ast.to_token_stream().into()
 }
