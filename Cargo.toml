@@ -2,13 +2,18 @@
 name = "bang_notation"
 version = "1.0.0"
 edition = "2021"
+authors = ["Aleksei Volkov"]
+description = "!-notation for Rust"
+readme = "README.md"
+repository = "https://github.com/AlgebraicWolf/rust-bang-notation"
+license = "Apache-2.0"
+keywords = ["monads", "functional"]
+exclude = [".github"]
 
 [lib]
 name = "bang_notation"
 path = "src/lib.rs"
 proc-macro = true
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 proc-macro2 = "1.0.75"
